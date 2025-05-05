@@ -1,0 +1,3 @@
+wechat_pay_score_controllers:
+  resource: '../../Controller/'
+  type: attribute

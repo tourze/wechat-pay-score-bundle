@@ -5,7 +5,6 @@ namespace WechatPayScoreBundle\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use DoctrineEnhanceBundle\Traits\TimestampableAware;
-use Symfony\Component\Serializer\Attribute\Groups;
 use Tourze\Arrayable\PlainArrayInterface;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
@@ -25,7 +24,6 @@ class PostDiscount implements PlainArrayInterface
 
     #[ExportColumn]
     #[ListColumn(order: -1, sorter: true)]
-    #[Groups(['restful_read', 'admin_curd', 'recursive_view', 'api_tree'])]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
@@ -33,12 +31,10 @@ class PostDiscount implements PlainArrayInterface
     private ?string $id = null;
 
     #[CreatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '创建人'])]
     private ?string $createdBy = null;
 
     #[UpdatedByColumn]
-    #[Groups(['restful_read'])]
     #[ORM\Column(nullable: true, options: ['comment' => '更新人'])]
     private ?string $updatedBy = null;
 

@@ -16,7 +16,7 @@ use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
 use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use Tourze\EasyAdmin\Attribute\Filter\Filterable;
 use WechatPayBundle\Entity\Merchant;
-use WechatPayBundle\Enum\ScoreOrderState;
+use WechatPayScoreBundle\Enum\ScoreOrderState;
 use WechatPayScoreBundle\Repository\ScoreOrderRepository;
 
 /**

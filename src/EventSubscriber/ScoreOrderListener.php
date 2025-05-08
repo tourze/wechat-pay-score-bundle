@@ -7,9 +7,9 @@ use Doctrine\ORM\Event\PostLoadEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
-use WechatPayBundle\Enum\ScoreOrderState;
 use WechatPayBundle\Service\WechatPayBuilder;
 use WechatPayScoreBundle\Entity\ScoreOrder;
+use WechatPayScoreBundle\Enum\ScoreOrderState;
 use Yiisoft\Json\Json;
 
 /**

@@ -4,7 +4,6 @@ namespace WechatPayScoreBundle\Repository;
 
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
-use DoctrineEnhanceBundle\Repository\CommonRepositoryAware;
 use WechatPayScoreBundle\Entity\PostPayment;
 
 /**
@@ -15,7 +14,6 @@ use WechatPayScoreBundle\Entity\PostPayment;
  */
 class PostPaymentRepository extends ServiceEntityRepository
 {
-    use CommonRepositoryAware;
 
     public function __construct(ManagerRegistry $registry)
     {

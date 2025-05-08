@@ -23,7 +23,6 @@
     "tourze/bundle-dependency": "0.0.*",
     "tourze/doctrine-snowflake-bundle": "0.1.*",
     "tourze/easy-admin-attribute": "0.1.*",
-    "tourze/easy-admin-menu-bundle": "0.1.*",
     "yiisoft/json": "^1.0"
   },
   "require-dev": {

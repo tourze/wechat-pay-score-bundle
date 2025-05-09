@@ -1,6 +1,6 @@
 {
   "name": "tourze/wechat-pay-score-bundle",
-  "description": "微信支付分",
+  "description": "微信支付-支付分",
   "type": "symfony-bundle",
   "license": "MIT",
   "require": {

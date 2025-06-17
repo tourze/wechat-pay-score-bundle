@@ -62,7 +62,7 @@ class PostDiscountTest extends TestCase
     {
         $this->assertNull($this->postDiscount->getCreateTime());
 
-        $dateTime = new \DateTime();
+        $dateTime = new \DateTimeImmutable();
         $this->postDiscount->setCreateTime($dateTime);
         $this->assertSame($dateTime, $this->postDiscount->getCreateTime());
     }
@@ -74,7 +74,7 @@ class PostDiscountTest extends TestCase
     {
         $this->assertNull($this->postDiscount->getUpdateTime());
 
-        $dateTime = new \DateTime();
+        $dateTime = new \DateTimeImmutable();
         $this->postDiscount->setUpdateTime($dateTime);
         $this->assertSame($dateTime, $this->postDiscount->getUpdateTime());
     }

@@ -265,13 +265,13 @@ class ScoreOrderTest extends TestCase
     {
         // CreateTime
         $this->assertNull($this->scoreOrder->getCreateTime());
-        $createTime = new \DateTime();
+        $createTime = new \DateTimeImmutable();
         $this->scoreOrder->setCreateTime($createTime);
         $this->assertSame($createTime, $this->scoreOrder->getCreateTime());
 
         // UpdateTime
         $this->assertNull($this->scoreOrder->getUpdateTime());
-        $updateTime = new \DateTime();
+        $updateTime = new \DateTimeImmutable();
         $this->scoreOrder->setUpdateTime($updateTime);
         $this->assertSame($updateTime, $this->scoreOrder->getUpdateTime());
     }

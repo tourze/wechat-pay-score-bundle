@@ -82,7 +82,7 @@ class PostPaymentTest extends TestCase
     {
         $this->assertNull($this->postPayment->getCreateTime());
 
-        $dateTime = new \DateTime();
+        $dateTime = new \DateTimeImmutable();
         $this->postPayment->setCreateTime($dateTime);
         $this->assertSame($dateTime, $this->postPayment->getCreateTime());
     }
@@ -94,7 +94,7 @@ class PostPaymentTest extends TestCase
     {
         $this->assertNull($this->postPayment->getUpdateTime());
 
-        $dateTime = new \DateTime();
+        $dateTime = new \DateTimeImmutable();
         $this->postPayment->setUpdateTime($dateTime);
         $this->assertSame($dateTime, $this->postPayment->getUpdateTime());
     }

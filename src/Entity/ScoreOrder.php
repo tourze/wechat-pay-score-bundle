@@ -8,10 +8,6 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
-use Tourze\EasyAdmin\Attribute\Action\Deletable;
-use Tourze\EasyAdmin\Attribute\Action\Editable;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use WechatPayBundle\Entity\Merchant;
 use WechatPayScoreBundle\Enum\ScoreOrderState;
 use WechatPayScoreBundle\Repository\ScoreOrderRepository;
@@ -21,14 +17,10 @@ use WechatPayScoreBundle\Repository\ScoreOrderRepository;
  *
  * @see https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter6_1_14.shtml
  */
-#[Deletable]
-#[Editable]
 #[ORM\Entity(repositoryClass: ScoreOrderRepository::class)]
 #[ORM\Table(name: 'wechat_pay_score_order', options: ['comment' => '支付分订单'])]
 class ScoreOrder
 {
-    #[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]

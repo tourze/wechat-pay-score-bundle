@@ -9,8 +9,6 @@ use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use WechatPayScoreBundle\Repository\PostDiscountRepository;
 
 /**
@@ -20,8 +18,6 @@ use WechatPayScoreBundle\Repository\PostDiscountRepository;
 #[ORM\Table(name: 'wechat_pay_score_post_discount', options: ['comment' => '微信支付积分贴折扣'])]
 class PostDiscount implements PlainArrayInterface
 {
-    #[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]

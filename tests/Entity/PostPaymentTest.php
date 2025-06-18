@@ -149,7 +149,6 @@ class PostPaymentTest extends TestCase
         $plainArray = $this->postPayment->retrievePlainArray();
 
         // 验证返回结构
-        $this->assertIsArray($plainArray);
         $this->assertArrayHasKey('name', $plainArray);
         $this->assertArrayHasKey('amount', $plainArray);
         $this->assertArrayHasKey('description', $plainArray);

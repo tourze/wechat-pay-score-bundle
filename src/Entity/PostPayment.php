@@ -9,8 +9,6 @@ use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Attribute\CreatedByColumn;
 use Tourze\DoctrineUserBundle\Attribute\UpdatedByColumn;
-use Tourze\EasyAdmin\Attribute\Column\ExportColumn;
-use Tourze\EasyAdmin\Attribute\Column\ListColumn;
 use WechatPayScoreBundle\Repository\PostPaymentRepository;
 
 /**
@@ -20,8 +18,6 @@ use WechatPayScoreBundle\Repository\PostPaymentRepository;
 #[ORM\Table(name: 'wechat_pay_score_post_payment', options: ['comment' => '微信支付记分后支付'])]
 class PostPayment implements PlainArrayInterface
 {
-    #[ExportColumn]
-    #[ListColumn(order: -1, sorter: true)]
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]

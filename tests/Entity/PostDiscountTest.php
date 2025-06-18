@@ -128,7 +128,6 @@ class PostDiscountTest extends TestCase
         $plainArray = $this->postDiscount->retrievePlainArray();
 
         // 验证返回结构
-        $this->assertIsArray($plainArray);
         $this->assertArrayHasKey('name', $plainArray);
         $this->assertArrayHasKey('description', $plainArray);
         $this->assertArrayHasKey('count', $plainArray);

@@ -37,7 +37,6 @@ class ScoreOrderStateTest extends TestCase
     public function testCases(): void
     {
         $cases = ScoreOrderState::cases();
-        $this->assertIsArray($cases);
         $this->assertCount(5, $cases);
         $this->assertContains(ScoreOrderState::CREATED, $cases);
         $this->assertContains(ScoreOrderState::DOING, $cases);

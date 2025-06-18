@@ -52,10 +52,10 @@ class ScoreOrderListener
             'notify_url' => $object->getNotifyUrl(),
         ];
 
-        if ($object->getEndTime()) {
+        if ($object->getEndTime() !== null) {
             $requestJson['time_range']['end_time'] = $object->getEndTime();
         }
-        if ($object->getEndTimeRemark()) {
+        if ($object->getEndTimeRemark() !== null) {
             $requestJson['time_range']['end_time_remark'] = $object->getEndTimeRemark();
         }
 
@@ -73,20 +73,20 @@ class ScoreOrderListener
         }
 
         $location = [];
-        if ($object->getStartLocation()) {
+        if ($object->getStartLocation() !== null) {
             $location['start_location'] = $object->getStartLocation();
         }
-        if ($object->getStartLocation()) {
+        if ($object->getEndLocation() !== null) {
             $location['end_location'] = $object->getEndLocation();
         }
         if (!empty($location)) {
             $requestJson['location'] = $location;
         }
 
-        if ($object->getAttach()) {
+        if ($object->getAttach() !== null) {
             $requestJson['attach'] = $object->getAttach();
         }
-        if ($object->getOpenId()) {
+        if ($object->getOpenId() !== null) {
             $requestJson['openid'] = $object->getOpenId();
         }
         if (null !== $object->isNeedUserConfirm()) {
@@ -181,7 +181,7 @@ class ScoreOrderListener
                     ],
                     'total_amount' => $object->getTotalAmount(),
                 ];
-                if ($object->getEndLocation()) {
+                if ($object->getEndLocation() !== null) {
                     $requestJson['location'] = [
                         'end_location' => $object->getEndLocation(),
                     ];

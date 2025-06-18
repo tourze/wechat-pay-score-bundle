@@ -33,7 +33,7 @@ class CallbackController extends AbstractController
     public function paySuccess(string $outTradeNo, Request $request)
     {
         $scoreOrder = $this->scoreOrderRepository->findOneBy(['outTradeNo' => $outTradeNo]);
-        if (!$scoreOrder) {
+        if ($scoreOrder === null) {
             throw new NotFoundHttpException();
         }
 

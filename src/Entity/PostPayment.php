@@ -16,7 +16,7 @@ use WechatPayScoreBundle\Repository\PostPaymentRepository;
  */
 #[ORM\Entity(repositoryClass: PostPaymentRepository::class)]
 #[ORM\Table(name: 'wechat_pay_score_post_payment', options: ['comment' => '微信支付记分后支付'])]
-class PostPayment implements PlainArrayInterface
+class PostPayment implements PlainArrayInterface, \Stringable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -147,5 +147,10 @@ class PostPayment implements PlainArrayInterface
             'description' => strval($this->getDescription()),
             'count' => intval($this->getCount()),
         ];
+    }
+
+    public function __toString(): string
+    {
+        return (string)$this->getId();
     }
 }

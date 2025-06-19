@@ -17,7 +17,7 @@ use WechatPayScoreBundle\Repository\PostDiscountRepository;
 #[ORM\Entity(repositoryClass: PostDiscountRepository::class)]
 #[ORM\Table(name: 'wechat_pay_score_post_discount', options: ['comment' => '微信支付积分贴折扣'])]
 class PostDiscount implements PlainArrayInterface
-{
+, \Stringable{
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
     #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
@@ -131,5 +131,10 @@ class PostDiscount implements PlainArrayInterface
             'description' => $this->getDescription(),
             'count' => intval($this->getCount()),
         ];
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->getId();
     }
 }

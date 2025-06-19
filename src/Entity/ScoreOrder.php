@@ -19,7 +19,7 @@ use WechatPayScoreBundle\Repository\ScoreOrderRepository;
  */
 #[ORM\Entity(repositoryClass: ScoreOrderRepository::class)]
 #[ORM\Table(name: 'wechat_pay_score_order', options: ['comment' => '支付分订单'])]
-class ScoreOrder
+class ScoreOrder implements \Stringable
 {
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'CUSTOM')]
@@ -541,5 +541,10 @@ class ScoreOrder
         $this->modifyPriceReason = $modifyPriceReason;
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return (string) $this->getId();
     }
 }

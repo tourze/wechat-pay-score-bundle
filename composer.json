@@ -27,6 +27,7 @@
     "tourze/doctrine-timestamp-bundle": "0.0.*",
     "tourze/doctrine-user-bundle": "0.0.*",
     "tourze/enum-extra": "0.1.*",
+    "tourze/symfony-routing-auto-loader-bundle": "0.0.*",
     "tourze/wechat-pay-bundle": "0.0.*",
     "wechatpay/wechatpay": "^1.4",
     "yiisoft/json": "^1.0"

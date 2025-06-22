@@ -34,31 +34,16 @@ class ScoreOrder implements \Stringable
     #[ORM\JoinColumn(nullable: false)]
     private ?Merchant $merchant = null;
 
-    /**
-     * 商户系统内部服务订单号（不是交易单号），要求此参数只能由数字、大小写字母_-|*组成，且在同一个商户号下唯一。详见[商户订单号]。
-     * 示例值：1234323JKHDFE1243252
-     */
     #[ORM\Column(length: 32, unique: true, options: ['comment' => '商户服务订单号'])]
     private ?string $outTradeNo = null;
 
-    /**
-     * 微信为调用商户分配的公众账号ID，接口传入的appid应该为公众号的appid和小程序的appid（在mp.weixin.qq.com申请的）或APP的appid（在open.weixin.qq.com申请的）。
-     * 校验规则：
-     * 1、该appid需要与调用接口的商户号（即请求头中的商户号）有绑定关系，若未绑定，可参考该指引完成绑定（商家商户号与AppID账号关联管理）；
-     * 2、该appid需要在支付分系统中先进行配置
-     * 示例值：wxd678efh567hg6787
-     */
     #[ORM\Column(length: 32, options: ['comment' => '应用ID'])]
     private ?string $appId = null;
 
-    /**
-     * 该服务ID有本接口对应产品的权限。
-     * 示例值：500001
-     */
     #[ORM\Column(length: 32, options: ['comment' => '服务ID'])]
     private ?string $serviceId = null;
 
-    #[ORM\Column(length: 20)]
+    #[ORM\Column(length: 20, options: ['comment' => '服务信息'])]
     private ?string $serviceIntroduction = null;
 
     #[ORM\OneToMany(mappedBy: 'scoreOrder', targetEntity: PostPayment::class)]
@@ -67,16 +52,16 @@ class ScoreOrder implements \Stringable
     #[ORM\OneToMany(mappedBy: 'scoreOrder', targetEntity: PostDiscount::class)]
     private Collection $postDiscounts;
 
-    #[ORM\Column(length: 14)]
+    #[ORM\Column(length: 14, options: ['comment' => '服务开始时间'])]
     private ?string $startTime = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
+    #[ORM\Column(length: 20, nullable: true, options: ['comment' => '服务开始时间备注'])]
     private ?string $startTimeRemark = null;
 
-    #[ORM\Column(length: 14, nullable: true)]
+    #[ORM\Column(length: 14, nullable: true, options: ['comment' => '服务结束时间'])]
     private ?string $endTime = null;
 
-    #[ORM\Column(length: 20, nullable: true)]
+    #[ORM\Column(length: 20, nullable: true, options: ['comment' => '服务结束时间备注'])]
     private ?string $endTimeRemark = null;
 
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '服务开始地点'])]
@@ -85,65 +70,52 @@ class ScoreOrder implements \Stringable
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '预计服务结束位置'])]
     private ?string $endLocation = null;
 
-    #[ORM\Column(length: 64)]
+    #[ORM\Column(length: 64, options: ['comment' => '风险金名称'])]
     private ?string $riskFundName = null;
 
-    #[ORM\Column]
+    #[ORM\Column(options: ['comment' => '风险金额'])]
     private ?int $riskFundAmount = null;
 
-    #[ORM\Column(length: 30, nullable: true)]
+    #[ORM\Column(length: 30, nullable: true, options: ['comment' => '风险说明'])]
     private ?string $riskFundDescription = null;
 
-    #[ORM\Column(length: 256, nullable: true)]
+    #[ORM\Column(length: 256, nullable: true, options: ['comment' => '商户数据包'])]
     private ?string $attach = null;
 
     #[ORM\Column(length: 255, options: ['comment' => '回调地址'])]
     private ?string $notifyUrl = null;
 
-    #[ORM\Column(length: 128, nullable: true)]
+    #[ORM\Column(length: 128, nullable: true, options: ['comment' => '用户标识'])]
     private ?string $openId = null;
 
-    #[ORM\Column(nullable: true)]
+    #[ORM\Column(nullable: true, options: ['comment' => '是否需要用户确认'])]
     private ?bool $needUserConfirm = null;
 
-    #[ORM\Column(length: 32, nullable: true, enumType: ScoreOrderState::class)]
+    #[ORM\Column(length: 32, nullable: true, enumType: ScoreOrderState::class, options: ['comment' => '订单状态'])]
     private ?ScoreOrderState $state = null;
 
-    #[ORM\Column(length: 32, nullable: true)]
+    #[ORM\Column(length: 32, nullable: true, options: ['comment' => '状态说明'])]
     private ?string $stateDescription = null;
 
-    #[ORM\Column(length: 64, nullable: true)]
+    #[ORM\Column(length: 64, nullable: true, options: ['comment' => '微信支付服务订单号'])]
     private ?string $orderId = null;
 
-    #[ORM\Column(length: 300, nullable: true)]
+    #[ORM\Column(length: 300, nullable: true, options: ['comment' => '跳转微信侧小程序订单数据'])]
     private ?string $package = null;
 
-    /**
-     * 总金额，大于等于0的数字，单位为分，只能为整数，详见支付金额。
-     * 此参数需满足：总金额=后付费项目金额之和-后付费商户优惠项目金额之和，且小于等于订单风险金额。取消订单时，该字段必须为0。
-     * 示例值：40000
-     */
     #[ORM\Column(nullable: true, options: ['comment' => '商户收款总金额'])]
     private ?int $totalAmount = null;
 
-    /**
-     * 是否需要收款，非0元完结后返回
-     * true：微信支付分代收款
-     * false：无需微信支付分代收款
-     */
     #[ORM\Column(nullable: true, options: ['comment' => '是否需要收款'])]
     private ?bool $needCollection = null;
 
-    /**
-     * 收款信息，非0元完结后返回
-     */
     #[ORM\Column(nullable: true, options: ['comment' => '收款信息'])]
     private ?array $collection = null;
 
-    #[ORM\Column(length: 30, nullable: true)]
+    #[ORM\Column(length: 30, nullable: true, options: ['comment' => '取消原因'])]
     private ?string $cancelReason = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
+    #[ORM\Column(length: 50, nullable: true, options: ['comment' => '修改金额原因'])]
     private ?string $modifyPriceReason = null;
 
     use TimestampableAware;

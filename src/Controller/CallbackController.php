@@ -30,7 +30,7 @@ class CallbackController extends AbstractController
      * @see https://github.com/wechatpay-apiv3/wechatpay-php#%E5%9B%9E%E8%B0%83%E9%80%9A%E7%9F%A5
      */
     #[Route(path: '/wechat-payment/score-order/success-callback/{outTradeNo}', name: 'wechat_payment_score_order_success_callback', methods: ['POST'])]
-    public function paySuccess(string $outTradeNo, Request $request)
+    public function __invoke(string $outTradeNo, Request $request)
     {
         $scoreOrder = $this->scoreOrderRepository->findOneBy(['outTradeNo' => $outTradeNo]);
         if ($scoreOrder === null) {

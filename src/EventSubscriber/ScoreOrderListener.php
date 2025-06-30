@@ -8,6 +8,7 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
 use WechatPayBundle\Service\WechatPayBuilder;
+use WechatPayScoreBundle\Exception\ScoreOrderCancelException;
 use WechatPayScoreBundle\Entity\ScoreOrder;
 use WechatPayScoreBundle\Enum\ScoreOrderState;
 use Yiisoft\Json\Json;
@@ -141,7 +142,7 @@ class ScoreOrderListener
     {
         // 订单为以下状态时可以取消订单：CREATED（已创单）、DOING（进行中）（包括商户完结支付分订单后，且支付分订单收款状态为待支付USER_PAYING）
         if (!in_array($object->getState(), [ScoreOrderState::CREATED, ScoreOrderState::DOING])) {
-            throw new \RuntimeException('无法取消交易分订单');
+            throw new ScoreOrderCancelException('无法取消交易分订单');
         }
 
         $builder = $this->payBuilder->genBuilder($object->getMerchant());

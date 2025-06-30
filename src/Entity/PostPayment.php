@@ -6,6 +6,7 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\Arrayable\PlainArrayInterface;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use Tourze\DoctrineUserBundle\Traits\BlameableAware;
 use WechatPayScoreBundle\Repository\PostPaymentRepository;
@@ -17,11 +18,6 @@ use WechatPayScoreBundle\Repository\PostPaymentRepository;
 #[ORM\Table(name: 'wechat_pay_score_post_payment', options: ['comment' => '微信支付记分后支付'])]
 class PostPayment implements PlainArrayInterface, \Stringable
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'postPayments')]
     #[ORM\JoinColumn(nullable: false)]
@@ -39,13 +35,9 @@ class PostPayment implements PlainArrayInterface, \Stringable
     #[ORM\Column(nullable: true, options: ['comment' => '付费数量'])]
     private ?int $count = null;
 
+    use SnowflakeKeyAware;
     use TimestampableAware;
     use BlameableAware;
-
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
 
     public function getScoreOrder(): ?ScoreOrder

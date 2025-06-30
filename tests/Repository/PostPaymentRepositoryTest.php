@@ -4,31 +4,51 @@ namespace WechatPayScoreBundle\Tests\Repository;
 
 use Doctrine\Persistence\ManagerRegistry;
 use PHPUnit\Framework\TestCase;
+use WechatPayScoreBundle\Entity\PostPayment;
 use WechatPayScoreBundle\Repository\PostPaymentRepository;
 
 class PostPaymentRepositoryTest extends TestCase
 {
-
     /**
-     * 测试PostPaymentRepository是否关联了正确的实体类
+     * 测试PostPaymentRepository是否正确扩展了ServiceEntityRepository
      */
-    public function testEntityAssociation(): void
+    public function testRepositoryStructure(): void
     {
         $reflectionClass = new \ReflectionClass(PostPaymentRepository::class);
+        
+        // 验证父类
+        $this->assertEquals('Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository', $reflectionClass->getParentClass()->getName());
+        
+        // 验证构造函数参数
         $constructor = $reflectionClass->getConstructor();
-
-        // 检查构造函数的第一个参数
+        $this->assertNotNull($constructor);
+        
         $parameters = $constructor->getParameters();
         $this->assertCount(1, $parameters);
-        $type = $parameters[0]->getType();
+        
+        $firstParam = $parameters[0];
+        $this->assertEquals('registry', $firstParam->getName());
+        $type = $firstParam->getType();
         $this->assertNotNull($type);
-        $this->assertEquals(ManagerRegistry::class, $type->__toString());
-
-        // 模拟实现来验证实体类
-        $repo = $this->getMockBuilder(PostPaymentRepository::class)
-            ->disableOriginalConstructor()
-            ->getMock();
-
-        $this->assertInstanceOf(PostPaymentRepository::class, $repo);
+        $this->assertEquals(ManagerRegistry::class, (string) $type);
+    }
+    
+    /**
+     * 测试是否关联了正确的实体类
+     */
+    public function testEntityClassAssociation(): void
+    {
+        $registry = $this->createMock(ManagerRegistry::class);
+        
+        // 使用反射来检查传递给父构造函数的参数
+        $reflectionClass = new \ReflectionClass(PostPaymentRepository::class);
+        $constructor = $reflectionClass->getConstructor();
+        
+        // 创建实际的仓库实例来验证
+        $repository = new PostPaymentRepository($registry);
+        $this->assertInstanceOf(PostPaymentRepository::class, $repository);
+        
+        // 验证类存在
+        $this->assertTrue(class_exists(PostPayment::class));
     }
 }

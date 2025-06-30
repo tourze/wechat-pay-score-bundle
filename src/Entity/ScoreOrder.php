@@ -7,6 +7,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use WechatPayBundle\Entity\Merchant;
 use WechatPayScoreBundle\Enum\ScoreOrderState;
@@ -21,11 +22,6 @@ use WechatPayScoreBundle\Repository\ScoreOrderRepository;
 #[ORM\Table(name: 'wechat_pay_score_order', options: ['comment' => '支付分订单'])]
 class ScoreOrder implements \Stringable
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue(strategy: 'CUSTOM')]
-    #[ORM\CustomIdGenerator(SnowflakeIdGenerator::class)]
-    #[ORM\Column(type: Types::BIGINT, nullable: false, options: ['comment' => 'ID'])]
-    private ?string $id = null;
 
     /**
      * 关联商户号
@@ -118,6 +114,7 @@ class ScoreOrder implements \Stringable
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '修改金额原因'])]
     private ?string $modifyPriceReason = null;
 
+    use SnowflakeKeyAware;
     use TimestampableAware;
 
     public function __construct()
@@ -126,10 +123,6 @@ class ScoreOrder implements \Stringable
         $this->postDiscounts = new ArrayCollection();
     }
 
-    public function getId(): ?string
-    {
-        return $this->id;
-    }
 
     public function getOutTradeNo(): ?string
     {

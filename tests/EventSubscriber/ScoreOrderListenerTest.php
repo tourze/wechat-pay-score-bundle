@@ -73,23 +73,6 @@ class ScoreOrderListenerTest extends TestCase
         $this->scoreOrder->setMerchant($merchant);
     }
 
-    /**
-     * 测试prePersist方法，但绕过API交互部分
-     */
-    public function testPrePersist(): void
-    {
-        // 跳过测试，因为它依赖于复杂的外部API模拟
-        $this->markTestSkipped('跳过测试 prePersist，因为它依赖于复杂的外部API交互');
-    }
-
-    /**
-     * 测试postLoad方法，但绕过API交互部分
-     */
-    public function testPostLoad(): void
-    {
-        // 跳过测试，因为它依赖于复杂的外部API模拟
-        $this->markTestSkipped('跳过测试 postLoad，因为它依赖于复杂的外部API交互');
-    }
 
     /**
      * 测试preRemove方法在订单状态不允许取消时抛出异常
@@ -107,23 +90,6 @@ class ScoreOrderListenerTest extends TestCase
         $this->listener->preRemove($this->scoreOrder);
     }
 
-    /**
-     * 测试preRemove方法，但跳过API交互部分
-     */
-    public function testPreRemove_successfulCancellation(): void
-    {
-        // 跳过测试，因为它依赖于复杂的外部API模拟
-        $this->markTestSkipped('跳过测试 preRemove，因为它依赖于复杂的外部API交互');
-    }
-
-    /**
-     * 测试preUpdate方法，但跳过API交互部分
-     */
-    public function testPreUpdate_completeOrder(): void
-    {
-        // 跳过测试，因为它依赖于复杂的外部API模拟
-        $this->markTestSkipped('跳过测试 preUpdate，因为它依赖于复杂的外部API交互');
-    }
 
     /**
      * 测试preUpdate方法在没有状态变更时的行为

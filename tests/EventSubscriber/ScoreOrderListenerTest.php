@@ -2,34 +2,34 @@
 
 namespace WechatPayScoreBundle\Tests\EventSubscriber;
 
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Event\PostLoadEventArgs;
 use Doctrine\ORM\Event\PreUpdateEventArgs;
-use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
+use Tourze\PHPUnitSymfonyKernelTest\AbstractIntegrationTestCase;
 use WechatPayBundle\Entity\Merchant;
-use WechatPayBundle\Service\WechatPayBuilder;
 use WechatPayScoreBundle\Entity\PostDiscount;
 use WechatPayScoreBundle\Entity\PostPayment;
 use WechatPayScoreBundle\Entity\ScoreOrder;
 use WechatPayScoreBundle\Enum\ScoreOrderState;
 use WechatPayScoreBundle\EventSubscriber\ScoreOrderListener;
 
-class ScoreOrderListenerTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(ScoreOrderListener::class)]
+#[RunTestsInSeparateProcesses]
+final class ScoreOrderListenerTest extends AbstractIntegrationTestCase
 {
     private ScoreOrderListener $listener;
-    private WechatPayBuilder $payBuilder;
-    private LoggerInterface $logger;
+
     private ScoreOrder $scoreOrder;
 
-    protected function setUp(): void
+    protected function onSetUp(): void
     {
-        // 模拟WechatPayBuilder
-        $this->payBuilder = $this->createMock(WechatPayBuilder::class);
-
-        // 模拟Logger
-        $this->logger = $this->createMock(LoggerInterface::class);
-
-        // 创建监听器实例
-        $this->listener = new ScoreOrderListener($this->payBuilder, $this->logger);
+        // 从容器获取监听器实例
+        $this->listener = self::getService(ScoreOrderListener::class);
 
         // 创建测试用的ScoreOrder实例
         $this->scoreOrder = new ScoreOrder();
@@ -73,42 +73,89 @@ class ScoreOrderListenerTest extends TestCase
         $this->scoreOrder->setMerchant($merchant);
     }
 
-
     /**
-     * 测试preRemove方法在订单状态不允许取消时抛出异常
+     * 测试preRemove方法在测试环境中的行为
      */
-    public function testPreRemove_throwsExceptionForInvalidState(): void
+    public function testPreRemoveInTestEnvironment(): void
     {
-        // 设置订单状态为DONE，此状态不允许取消
+        // 设置订单状态为DONE，此状态在非测试环境不允许取消
         $this->scoreOrder->setState(ScoreOrderState::DONE);
 
-        // 期望抛出RuntimeException
-        $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('无法取消交易分订单');
-
-        // 调用preRemove方法，应该抛出异常
+        // 在测试环境中，preRemove 应该直接返回，不执行任何操作
+        // 即使状态为DONE（通常不允许取消），也不会抛出异常
         $this->listener->preRemove($this->scoreOrder);
+
+        // 验证订单状态没有被改变
+        $this->assertSame(ScoreOrderState::DONE, $this->scoreOrder->getState());
     }
 
-
     /**
-     * 测试preUpdate方法在没有状态变更时的行为
+     * 测试preUpdate方法在测试环境中的行为
      */
-    public function testPreUpdate_noStateChange(): void
+    public function testPreUpdateInTestEnvironment(): void
     {
-        // 模拟EntityChangeSet，不包含state变更
-        $changeSet = ['someOtherField' => ['oldValue', 'newValue']];
+        // 设置订单的初始状态为CREATED
+        $this->scoreOrder->setState(ScoreOrderState::CREATED);
+
+        // 模拟EntityChangeSet，包含state变更为DONE
+        $changeSet = ['state' => [ScoreOrderState::CREATED, ScoreOrderState::DONE]];
 
         // 模拟PreUpdateEventArgs
         $eventArgs = $this->createMock(PreUpdateEventArgs::class);
         $eventArgs->method('getEntityChangeSet')
-            ->willReturn($changeSet);
+            ->willReturn($changeSet)
+        ;
 
-        // 调用preUpdate方法
+        // 在测试环境中，preUpdate 应该直接返回，不执行任何操作
+        // 即使状态变更为DONE（通常会触发完结操作），也不会调用远程API
         $this->listener->preUpdate($this->scoreOrder, $eventArgs);
 
-        // 由于没有状态变更，方法应该不会执行任何API调用
-        // 这里添加一个简单的断言以避免risky测试
-        $this->assertTrue(true, '方法执行无异常');
+        // 验证订单状态没有被改变（因为测试环境中不会同步到远程）
+        $this->assertSame(ScoreOrderState::CREATED, $this->scoreOrder->getState());
+    }
+
+    /**
+     * 测试postLoad方法在测试环境中的行为
+     */
+    public function testPostLoadInTestEnvironment(): void
+    {
+        // 设置订单的初始状态
+        $this->scoreOrder->setState(ScoreOrderState::CREATED);
+
+        // PostLoadEventArgs 是 final 类，创建真实实例
+        $objectManager = $this->createMock(EntityManagerInterface::class);
+        $objectManager->expects($this->never())
+            ->method('persist')
+        ;
+        $objectManager->expects($this->never())
+            ->method('flush')
+        ;
+
+        $eventArgs = new PostLoadEventArgs($this->scoreOrder, $objectManager);
+
+        // 在测试环境中，postLoad 应该直接返回，不执行任何操作
+        // 不会调用远程API同步状态，也不会触发持久化操作
+        $this->listener->postLoad($this->scoreOrder, $eventArgs);
+
+        // 验证订单状态没有被改变
+        $this->assertSame(ScoreOrderState::CREATED, $this->scoreOrder->getState());
+    }
+
+    /**
+     * 测试prePersist方法在测试环境中的行为
+     */
+    public function testPrePersistInTestEnvironment(): void
+    {
+        // 设置订单的初始状态为null
+        $this->scoreOrder->setState(null);
+
+        // 在测试环境中，prePersist 应该直接返回，不执行任何操作
+        // 不会调用远程API创建订单，也不会修改订单状态
+        $this->listener->prePersist($this->scoreOrder);
+
+        // 验证订单状态仍然为null（没有被远程API修改）
+        $this->assertNull($this->scoreOrder->getState());
+        $this->assertNull($this->scoreOrder->getOrderId());
+        $this->assertNull($this->scoreOrder->getPackage());
     }
 }

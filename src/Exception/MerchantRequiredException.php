@@ -4,6 +4,6 @@ declare(strict_types=1);
 
 namespace WechatPayScoreBundle\Exception;
 
-class ScoreOrderCancelException extends \RuntimeException
+class MerchantRequiredException extends \InvalidArgumentException
 {
 }

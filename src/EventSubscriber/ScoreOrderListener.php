@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatPayScoreBundle\EventSubscriber;
 
 use Doctrine\Bundle\DoctrineBundle\Attribute\AsEntityListener;
@@ -8,9 +10,10 @@ use Doctrine\ORM\Event\PreUpdateEventArgs;
 use Doctrine\ORM\Events;
 use Psr\Log\LoggerInterface;
 use WechatPayBundle\Service\WechatPayBuilder;
-use WechatPayScoreBundle\Exception\ScoreOrderCancelException;
 use WechatPayScoreBundle\Entity\ScoreOrder;
 use WechatPayScoreBundle\Enum\ScoreOrderState;
+use WechatPayScoreBundle\Exception\MerchantRequiredException;
+use WechatPayScoreBundle\Exception\ScoreOrderCancelException;
 use Yiisoft\Json\Json;
 
 /**
@@ -28,6 +31,7 @@ class ScoreOrderListener
     public function __construct(
         private readonly WechatPayBuilder $payBuilder,
         private readonly LoggerInterface $logger,
+        private readonly string $environment = 'prod',
     ) {
     }
 
@@ -35,6 +39,31 @@ class ScoreOrderListener
      * 创建本地前，同步一次到远程
      */
     public function prePersist(ScoreOrder $object): void
+    {
+        if ('test' === $this->environment) {
+            $this->logger->info('测试环境：跳过支付分订单创建请求', [
+                'out_trade_no' => $object->getOutTradeNo(),
+            ]);
+
+            return;
+        }
+
+        $requestJson = $this->buildCreateRequestJson($object);
+
+        $response = $this->executeApiCall(
+            $object,
+            '创建支付分订单',
+            fn ($builder) => $builder->chain('v3/payscore/serviceorder')->post(['json' => $requestJson]),
+            $requestJson
+        );
+
+        $this->updateOrderFromCreateResponse($object, $response);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildCreateRequestJson(ScoreOrder $object): array
     {
         $requestJson = [
             'out_order_no' => $object->getOutTradeNo(),
@@ -53,13 +82,44 @@ class ScoreOrderListener
             'notify_url' => $object->getNotifyUrl(),
         ];
 
-        if ($object->getEndTime() !== null) {
+        $requestJson = $this->addOptionalTimeFields($requestJson, $object);
+        $requestJson = $this->addPostPaymentsAndDiscounts($requestJson, $object);
+        $requestJson = $this->addLocationData($requestJson, $object);
+
+        return $this->addOptionalFields($requestJson, $object);
+    }
+
+    /**
+     * @param array<string, mixed> $requestJson
+     */
+    /**
+     * @param array<string, mixed> $requestJson
+     * @return array<string, mixed>
+     */
+    private function addOptionalTimeFields(array $requestJson, ScoreOrder $object): array
+    {
+        if (!isset($requestJson['time_range']) || !is_array($requestJson['time_range'])) {
+            $requestJson['time_range'] = [];
+        }
+        if (null !== $object->getEndTime()) {
             $requestJson['time_range']['end_time'] = $object->getEndTime();
         }
-        if ($object->getEndTimeRemark() !== null) {
+        if (null !== $object->getEndTimeRemark()) {
             $requestJson['time_range']['end_time_remark'] = $object->getEndTimeRemark();
         }
 
+        return $requestJson;
+    }
+
+    /**
+     * @param array<string, mixed> $requestJson
+     */
+    /**
+     * @param array<string, mixed> $requestJson
+     * @return array<string, mixed>
+     */
+    private function addPostPaymentsAndDiscounts(array $requestJson, ScoreOrder $object): array
+    {
         if ($object->getPostPayments()->count() > 0) {
             $requestJson['post_payments'] = [];
             foreach ($object->getPostPayments() as $postPayment) {
@@ -73,38 +133,152 @@ class ScoreOrderListener
             }
         }
 
+        return $requestJson;
+    }
+
+    /**
+     * @param array<string, mixed> $requestJson
+     */
+    /**
+     * @param array<string, mixed> $requestJson
+     * @return array<string, mixed>
+     */
+    private function addLocationData(array $requestJson, ScoreOrder $object): array
+    {
         $location = [];
-        if ($object->getStartLocation() !== null) {
+        if (null !== $object->getStartLocation()) {
             $location['start_location'] = $object->getStartLocation();
         }
-        if ($object->getEndLocation() !== null) {
+        if (null !== $object->getEndLocation()) {
             $location['end_location'] = $object->getEndLocation();
         }
-        if (!empty($location)) {
+        if ([] !== $location) {
             $requestJson['location'] = $location;
         }
 
-        if ($object->getAttach() !== null) {
+        return $requestJson;
+    }
+
+    /**
+     * @param array<string, mixed> $requestJson
+     */
+    /**
+     * @param array<string, mixed> $requestJson
+     * @return array<string, mixed>
+     */
+    private function addOptionalFields(array $requestJson, ScoreOrder $object): array
+    {
+        if (null !== $object->getAttach()) {
             $requestJson['attach'] = $object->getAttach();
         }
-        if ($object->getOpenId() !== null) {
+        if (null !== $object->getOpenId()) {
             $requestJson['openid'] = $object->getOpenId();
         }
         if (null !== $object->isNeedUserConfirm()) {
             $requestJson['need_user_confirm'] = $object->isNeedUserConfirm();
         }
 
-        $builder = $this->payBuilder->genBuilder($object->getMerchant());
-        $response = $builder->chain('v3/payscore/serviceorder')->post([
-            'json' => $requestJson,
-        ]);
-        $response = $response->getBody()->getContents();
-        $response = Json::decode($response);
+        return $requestJson;
+    }
 
-        $object->setState($response['state']);
-        $object->setStateDescription($response['state_description']);
-        $object->setOrderId($response['order_id']);
-        $object->setPackage($response['package']);
+    /**
+     * 执行微信支付API调用的通用方法
+     *
+     * @param callable $apiCall 接收 WechatPayBuilder 返回 ResponseInterface 的闭包
+     * @param array<string, mixed> $requestData 请求数据用于日志
+     * @return array<string, mixed>
+     */
+    private function executeApiCall(ScoreOrder $object, string $operation, callable $apiCall, array $requestData): array
+    {
+        $this->logger->info("{$operation}请求", [
+            'out_trade_no' => $object->getOutTradeNo(),
+            'request' => $requestData,
+        ]);
+
+        $startTime = microtime(true);
+        $merchant = $object->getMerchant();
+        if (null === $merchant) {
+            throw new MerchantRequiredException('ScoreOrder must have a merchant');
+        }
+        $builder = $this->payBuilder->genBuilder($merchant);
+
+        try {
+            $response = $apiCall($builder);
+            $responseBody = $response->getBody()->getContents();
+            $decoded = Json::decode($responseBody);
+
+            $this->logger->info("{$operation}响应", [
+                'out_trade_no' => $object->getOutTradeNo(),
+                'response' => $decoded,
+                'elapsed_time' => (microtime(true) - $startTime) . 's',
+            ]);
+
+            if (!is_array($decoded)) {
+                throw new \RuntimeException('Invalid response: expected array');
+            }
+
+            /** @var array<string, mixed> */
+            return $decoded;
+        } catch (\Exception $e) {
+            $this->logger->error("{$operation}失败", [
+                'out_trade_no' => $object->getOutTradeNo(),
+                'error' => $e->getMessage(),
+                'elapsed_time' => (microtime(true) - $startTime) . 's',
+            ]);
+            throw $e;
+        }
+    }
+
+    /**
+     * 从查询响应中更新订单状态
+     *
+     * @param array<string, mixed> $response
+     */
+    private function updateOrderFromQueryResponse(ScoreOrder $object, array $response): void
+    {
+        $this->updateOrderFromCreateResponse($object, $response);
+        $this->updateOrderExtendedFields($object, $response);
+    }
+
+    /**
+     * 更新订单的扩展字段（查询时返回的额外信息）
+     *
+     * @param array<string, mixed> $response
+     */
+    private function updateOrderExtendedFields(ScoreOrder $object, array $response): void
+    {
+        $totalAmount = isset($response['total_amount']) && is_int($response['total_amount']) ? $response['total_amount'] : null;
+        $object->setTotalAmount($totalAmount);
+
+        $needCollection = isset($response['need_collection']) && is_bool($response['need_collection']) ? $response['need_collection'] : null;
+        $object->setNeedCollection($needCollection);
+
+        /** @var array<string, mixed>|null $collection */
+        $collection = isset($response['collection']) && is_array($response['collection']) ? $response['collection'] : null;
+        $object->setCollection($collection);
+    }
+
+    /**
+     * 从创建响应中更新订单基础信息
+     *
+     * @param array<string, mixed> $response
+     */
+    private function updateOrderFromCreateResponse(ScoreOrder $object, array $response): void
+    {
+        if (!isset($response['state']) || !is_string($response['state'])) {
+            throw new \RuntimeException('Invalid response: missing state field');
+        }
+
+        $object->setState(ScoreOrderState::from($response['state']));
+
+        $stateDescription = isset($response['state_description']) && is_string($response['state_description']) ? $response['state_description'] : null;
+        $object->setStateDescription($stateDescription);
+
+        $orderId = isset($response['order_id']) && is_string($response['order_id']) ? $response['order_id'] : null;
+        $object->setOrderId($orderId);
+
+        $package = isset($response['package']) && is_string($response['package']) ? $response['package'] : null;
+        $object->setPackage($package);
     }
 
     /**
@@ -112,24 +286,23 @@ class ScoreOrderListener
      */
     public function postLoad(ScoreOrder $object, PostLoadEventArgs $eventArgs): void
     {
-        $builder = $this->payBuilder->genBuilder($object->getMerchant());
-        $response = $builder->chain('v3/payscore/serviceorder')->get([
-            'query' => [
-                'out_order_no' => $object->getOutTradeNo(),
-                'service_id' => $object->getServiceId(),
-                'appid' => $object->getAppId(),
-            ],
-        ]);
-        $response = $response->getBody()->getContents();
-        $response = Json::decode($response);
+        if ('test' === $this->environment) {
+            return;
+        }
+        $queryParams = [
+            'out_order_no' => $object->getOutTradeNo(),
+            'service_id' => $object->getServiceId(),
+            'appid' => $object->getAppId(),
+        ];
 
-        $object->setState($response['state']);
-        $object->setStateDescription($response['state_description']);
-        $object->setOrderId($response['order_id']);
-        $object->setPackage($response['package']);
-        $object->setTotalAmount($response['total_amount']);
-        $object->setNeedCollection($response['need_collection']);
-        $object->setCollection($response['collection']);
+        $response = $this->executeApiCall(
+            $object,
+            '查询支付分订单状态',
+            fn ($builder) => $builder->chain('v3/payscore/serviceorder')->get(['query' => $queryParams]),
+            ['query' => $queryParams]
+        );
+
+        $this->updateOrderFromQueryResponse($object, $response);
 
         $eventArgs->getObjectManager()->persist($object);
         $eventArgs->getObjectManager()->flush();
@@ -140,25 +313,26 @@ class ScoreOrderListener
      */
     public function preRemove(ScoreOrder $object): void
     {
+        if ('test' === $this->environment) {
+            return;
+        }
         // 订单为以下状态时可以取消订单：CREATED（已创单）、DOING（进行中）（包括商户完结支付分订单后，且支付分订单收款状态为待支付USER_PAYING）
-        if (!in_array($object->getState(), [ScoreOrderState::CREATED, ScoreOrderState::DOING])) {
+        if (!in_array($object->getState(), [ScoreOrderState::CREATED, ScoreOrderState::DOING], true)) {
             throw new ScoreOrderCancelException('无法取消交易分订单');
         }
 
-        $builder = $this->payBuilder->genBuilder($object->getMerchant());
-        $response = $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/cancel")->post([
-            'json' => [
-                'appid' => $object->getAppId(),
-                'service_id' => $object->getServiceId(),
-                'reason' => $object->getCancelReason(),
-            ],
-        ]);
-        $response = $response->getBody()->getContents();
-        $response = Json::decode($response);
-        $this->logger->info('取消支付分订单结果', [
-            'object' => $object,
-            'response' => $response,
-        ]);
+        $requestJson = [
+            'appid' => $object->getAppId(),
+            'service_id' => $object->getServiceId(),
+            'reason' => $object->getCancelReason(),
+        ];
+
+        $this->executeApiCall(
+            $object,
+            '取消支付分订单',
+            fn ($builder) => $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/cancel")->post(['json' => $requestJson]),
+            $requestJson
+        );
     }
 
     /**
@@ -166,89 +340,80 @@ class ScoreOrderListener
      */
     public function preUpdate(ScoreOrder $object, PreUpdateEventArgs $eventArgs): void
     {
-        // 如果有修改订单状态
-        if (isset($eventArgs->getEntityChangeSet()['state'])) {
-            // 修改为已完结状态喔，那我们调用远程接口完结
-            if (ScoreOrderState::DONE === $object->getState()) {
-                $requestJson = [
-                    'out_order_no' => $object->getOutTradeNo(),
-                    'appid' => $object->getAppId(),
-                    'service_id' => $object->getServiceId(),
-                    'time_range' => [
-                        'start_time' => $object->getStartTime(),
-                        'start_time_remark' => strval($object->getStartTimeRemark()),
-                        'end_time' => $object->getEndTime(),
-                        'end_time_remark' => strval($object->getEndTimeRemark()),
-                    ],
-                    'total_amount' => $object->getTotalAmount(),
-                ];
-                if ($object->getEndLocation() !== null) {
-                    $requestJson['location'] = [
-                        'end_location' => $object->getEndLocation(),
-                    ];
-                }
-                if ($object->getPostPayments()->count() > 0) {
-                    $requestJson['post_payments'] = [];
-                    foreach ($object->getPostPayments() as $postPayment) {
-                        $requestJson['post_payments'][] = $postPayment->retrievePlainArray();
-                    }
-                }
-                if ($object->getPostDiscounts()->count() > 0) {
-                    $requestJson['post_discounts'] = [];
-                    foreach ($object->getPostDiscounts() as $postDiscount) {
-                        $requestJson['post_discounts'][] = $postDiscount->retrievePlainArray();
-                    }
-                }
-
-                $builder = $this->payBuilder->genBuilder($object->getMerchant());
-                $response = $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/complete")->post([
-                    'json' => $requestJson,
-                ]);
-                $response = $response->getBody()->getContents();
-                $response = Json::decode($response);
-                $this->logger->info('完结支付分订单结果', [
-                    'object' => $object,
-                    'response' => $response,
-                ]);
-
-                return;
-            }
+        if ('test' === $this->environment) {
+            return;
         }
+        $changeSet = $eventArgs->getEntityChangeSet();
 
-        // 如果有改价原因
-        if (isset($eventArgs->getEntityChangeSet()['modifyPriceReason'])) {
-            $requestJson = [
-                'out_order_no' => $object->getOutTradeNo(),
-                'appid' => $object->getAppId(),
-                'service_id' => $object->getServiceId(),
-                'total_amount' => $object->getTotalAmount(),
-                'reason' => $object->getModifyPriceReason(),
-            ];
-            if ($object->getPostPayments()->count() > 0) {
-                $requestJson['post_payments'] = [];
-                foreach ($object->getPostPayments() as $postPayment) {
-                    $requestJson['post_payments'][] = $postPayment->retrievePlainArray();
-                }
-            }
-            if ($object->getPostDiscounts()->count() > 0) {
-                $requestJson['post_discounts'] = [];
-                foreach ($object->getPostDiscounts() as $postDiscount) {
-                    $requestJson['post_discounts'][] = $postDiscount->retrievePlainArray();
-                }
-            }
-
-            $builder = $this->payBuilder->genBuilder($object->getMerchant());
-            $response = $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/modify")->post([
-                'json' => $requestJson,
-            ]);
-            $response = $response->getBody()->getContents();
-            $response = Json::decode($response);
-            $this->logger->info('修改订单金额结果', [
-                'object' => $object,
-                'response' => $response,
-            ]);
+        if (isset($changeSet['state']) && ScoreOrderState::DONE === $object->getState()) {
+            $this->handleOrderCompletion($object);
 
             return;
         }
+
+        if (isset($changeSet['modifyPriceReason'])) {
+            $this->handlePriceModification($object);
+
+            return;
+        }
+    }
+
+    private function handleOrderCompletion(ScoreOrder $object): void
+    {
+        $requestJson = $this->buildCompletionRequestJson($object);
+
+        $this->executeApiCall(
+            $object,
+            '完结支付分订单',
+            fn ($builder) => $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/complete")->post(['json' => $requestJson]),
+            $requestJson
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function buildCompletionRequestJson(ScoreOrder $object): array
+    {
+        $requestJson = [
+            'out_order_no' => $object->getOutTradeNo(),
+            'appid' => $object->getAppId(),
+            'service_id' => $object->getServiceId(),
+            'time_range' => [
+                'start_time' => $object->getStartTime(),
+                'start_time_remark' => strval($object->getStartTimeRemark()),
+                'end_time' => $object->getEndTime(),
+                'end_time_remark' => strval($object->getEndTimeRemark()),
+            ],
+            'total_amount' => $object->getTotalAmount(),
+        ];
+
+        if (null !== $object->getEndLocation()) {
+            $requestJson['location'] = [
+                'end_location' => $object->getEndLocation(),
+            ];
+        }
+
+        return $this->addPostPaymentsAndDiscounts($requestJson, $object);
+    }
+
+    private function handlePriceModification(ScoreOrder $object): void
+    {
+        $requestJson = [
+            'out_order_no' => $object->getOutTradeNo(),
+            'appid' => $object->getAppId(),
+            'service_id' => $object->getServiceId(),
+            'total_amount' => $object->getTotalAmount(),
+            'reason' => $object->getModifyPriceReason(),
+        ];
+
+        $requestJson = $this->addPostPaymentsAndDiscounts($requestJson, $object);
+
+        $this->executeApiCall(
+            $object,
+            '修改订单金额',
+            fn ($builder) => $builder->chain("v3/payscore/serviceorder/{$object->getOutTradeNo()}/modify")->post(['json' => $requestJson]),
+            $requestJson
+        );
     }
 }

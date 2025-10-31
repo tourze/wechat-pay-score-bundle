@@ -2,17 +2,43 @@
 
 namespace WechatPayScoreBundle\Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 use WechatPayScoreBundle\Entity\PostDiscount;
 use WechatPayScoreBundle\Entity\ScoreOrder;
 
-class PostDiscountTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PostDiscount::class)]
+final class PostDiscountTest extends AbstractEntityTestCase
 {
     private PostDiscount $postDiscount;
 
     protected function setUp(): void
     {
         $this->postDiscount = new PostDiscount();
+    }
+
+    protected function createEntity(): object
+    {
+        return new PostDiscount();
+    }
+
+    /**
+     * 提供属性及其样本值的 Data Provider.
+     *
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        yield 'name' => ['name', '测试优惠名称'];
+        yield 'description' => ['description', '测试优惠描述'];
+        yield 'count' => ['count', 1];
+        yield 'createTime' => ['createTime', new \DateTimeImmutable()];
+        yield 'updateTime' => ['updateTime', new \DateTimeImmutable()];
+        yield 'createdBy' => ['createdBy', 'test_user'];
+        yield 'updatedBy' => ['updatedBy', 'test_user'];
     }
 
     /**
@@ -141,7 +167,7 @@ class PostDiscountTest extends TestCase
     /**
      * 测试retrievePlainArray方法处理空值的情况
      */
-    public function testRetrievePlainArray_withNullCount(): void
+    public function testRetrievePlainArrayWithNullCount(): void
     {
         // 设置部分测试数据，保持count为null
         $this->postDiscount->setName('满减券');

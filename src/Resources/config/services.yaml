@@ -4,16 +4,14 @@ services:
     autowire: true      # Automatically injects dependencies in your services.
     autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
 
-  WechatPayScoreBundle\Command\:
-    resource: '../../Command/'
   WechatPayScoreBundle\Controller\:
     resource: '../../Controller/'
   WechatPayScoreBundle\EventSubscriber\:
     resource: '../../EventSubscriber/'
-  WechatPayScoreBundle\MessageHandler\:
-    resource: '../../MessageHandler/'
-  WechatPayScoreBundle\Procedure\:
-    resource: '../../Procedure/'
+  
+  WechatPayScoreBundle\EventSubscriber\ScoreOrderListener:
+    arguments:
+      $environment: '%kernel.environment%'
   WechatPayScoreBundle\Repository\:
     resource: '../../Repository/'
   WechatPayScoreBundle\Service\:

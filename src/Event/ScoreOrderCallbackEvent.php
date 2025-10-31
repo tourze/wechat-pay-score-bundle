@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatPayScoreBundle\Event;
 
 use Symfony\Contracts\EventDispatcher\Event;
@@ -12,6 +14,9 @@ class ScoreOrderCallbackEvent extends Event
 {
     private string $eventType;
 
+    /**
+     * @var array<string, mixed>
+     */
     private array $resource = [];
 
     private ScoreOrder $scoreOrder;
@@ -26,11 +31,17 @@ class ScoreOrderCallbackEvent extends Event
         $this->eventType = $eventType;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getResource(): array
     {
         return $this->resource;
     }
 
+    /**
+     * @param array<string, mixed> $resource
+     */
     public function setResource(array $resource): void
     {
         $this->resource = $resource;

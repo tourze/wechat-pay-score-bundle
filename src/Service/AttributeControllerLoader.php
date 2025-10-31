@@ -31,6 +31,7 @@ final class AttributeControllerLoader extends Loader implements RoutingAutoLoade
     {
         $collection = new RouteCollection();
         $collection->addCollection($this->controllerLoader->load(CallbackController::class));
+
         return $collection;
     }
 

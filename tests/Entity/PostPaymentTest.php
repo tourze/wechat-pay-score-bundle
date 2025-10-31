@@ -2,17 +2,44 @@
 
 namespace WechatPayScoreBundle\Tests\Entity;
 
-use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use Tourze\PHPUnitDoctrineEntity\AbstractEntityTestCase;
 use WechatPayScoreBundle\Entity\PostPayment;
 use WechatPayScoreBundle\Entity\ScoreOrder;
 
-class PostPaymentTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(PostPayment::class)]
+final class PostPaymentTest extends AbstractEntityTestCase
 {
     private PostPayment $postPayment;
 
     protected function setUp(): void
     {
         $this->postPayment = new PostPayment();
+    }
+
+    protected function createEntity(): object
+    {
+        return new PostPayment();
+    }
+
+    /**
+     * 提供属性及其样本值的 Data Provider.
+     *
+     * @return iterable<string, array{string, mixed}>
+     */
+    public static function propertiesProvider(): iterable
+    {
+        yield 'name' => ['name', '测试服务名称'];
+        yield 'amount' => ['amount', 1000];
+        yield 'description' => ['description', '测试服务描述'];
+        yield 'count' => ['count', 1];
+        yield 'createTime' => ['createTime', new \DateTimeImmutable()];
+        yield 'updateTime' => ['updateTime', new \DateTimeImmutable()];
+        yield 'createdBy' => ['createdBy', 'test_user'];
+        yield 'updatedBy' => ['updatedBy', 'test_user'];
     }
 
     /**
@@ -164,7 +191,7 @@ class PostPaymentTest extends TestCase
     /**
      * 测试retrievePlainArray方法处理null值的情况
      */
-    public function testRetrievePlainArray_withNullValues(): void
+    public function testRetrievePlainArrayWithNullValues(): void
     {
         // 设置部分测试数据，保持一些字段为null
         $this->postPayment->setAmount(1000); // 必须设置，因为不允许为null

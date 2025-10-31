@@ -1,12 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatPayScoreBundle\Entity;
 
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Tourze\DoctrineSnowflakeBundle\Service\SnowflakeIdGenerator;
+use Symfony\Component\Validator\Constraints as Assert;
 use Tourze\DoctrineSnowflakeBundle\Traits\SnowflakeKeyAware;
 use Tourze\DoctrineTimestampBundle\Traits\TimestampableAware;
 use WechatPayBundle\Entity\Merchant;
@@ -22,6 +23,8 @@ use WechatPayScoreBundle\Repository\ScoreOrderRepository;
 #[ORM\Table(name: 'wechat_pay_score_order', options: ['comment' => '支付分订单'])]
 class ScoreOrder implements \Stringable
 {
+    use SnowflakeKeyAware;
+    use TimestampableAware;
 
     /**
      * 关联商户号
@@ -31,91 +34,131 @@ class ScoreOrder implements \Stringable
     private ?Merchant $merchant = null;
 
     #[ORM\Column(length: 32, unique: true, options: ['comment' => '商户服务订单号'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 32)]
     private ?string $outTradeNo = null;
 
     #[ORM\Column(length: 32, options: ['comment' => '应用ID'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 32)]
     private ?string $appId = null;
 
     #[ORM\Column(length: 32, options: ['comment' => '服务ID'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 32)]
     private ?string $serviceId = null;
 
     #[ORM\Column(length: 20, options: ['comment' => '服务信息'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 20)]
     private ?string $serviceIntroduction = null;
 
+    /**
+     * @var Collection<int, PostPayment>
+     */
     #[ORM\OneToMany(mappedBy: 'scoreOrder', targetEntity: PostPayment::class)]
     private Collection $postPayments;
 
+    /**
+     * @var Collection<int, PostDiscount>
+     */
     #[ORM\OneToMany(mappedBy: 'scoreOrder', targetEntity: PostDiscount::class)]
     private Collection $postDiscounts;
 
     #[ORM\Column(length: 14, options: ['comment' => '服务开始时间'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 14)]
     private ?string $startTime = null;
 
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '服务开始时间备注'])]
+    #[Assert\Length(max: 20)]
     private ?string $startTimeRemark = null;
 
     #[ORM\Column(length: 14, nullable: true, options: ['comment' => '服务结束时间'])]
+    #[Assert\Length(max: 14)]
     private ?string $endTime = null;
 
     #[ORM\Column(length: 20, nullable: true, options: ['comment' => '服务结束时间备注'])]
+    #[Assert\Length(max: 20)]
     private ?string $endTimeRemark = null;
 
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '服务开始地点'])]
+    #[Assert\Length(max: 50)]
     private ?string $startLocation = null;
 
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '预计服务结束位置'])]
+    #[Assert\Length(max: 50)]
     private ?string $endLocation = null;
 
     #[ORM\Column(length: 64, options: ['comment' => '风险金名称'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 64)]
     private ?string $riskFundName = null;
 
     #[ORM\Column(options: ['comment' => '风险金额'])]
+    #[Assert\PositiveOrZero]
     private ?int $riskFundAmount = null;
 
     #[ORM\Column(length: 30, nullable: true, options: ['comment' => '风险说明'])]
+    #[Assert\Length(max: 30)]
     private ?string $riskFundDescription = null;
 
     #[ORM\Column(length: 256, nullable: true, options: ['comment' => '商户数据包'])]
+    #[Assert\Length(max: 256)]
     private ?string $attach = null;
 
     #[ORM\Column(length: 255, options: ['comment' => '回调地址'])]
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
+    #[Assert\Url]
     private ?string $notifyUrl = null;
 
     #[ORM\Column(length: 128, nullable: true, options: ['comment' => '用户标识'])]
+    #[Assert\Length(max: 128)]
     private ?string $openId = null;
 
     #[ORM\Column(nullable: true, options: ['comment' => '是否需要用户确认'])]
+    #[Assert\Type(type: 'bool')]
     private ?bool $needUserConfirm = null;
 
     #[ORM\Column(length: 32, nullable: true, enumType: ScoreOrderState::class, options: ['comment' => '订单状态'])]
+    #[Assert\Choice(callback: [ScoreOrderState::class, 'cases'])]
     private ?ScoreOrderState $state = null;
 
     #[ORM\Column(length: 32, nullable: true, options: ['comment' => '状态说明'])]
+    #[Assert\Length(max: 32)]
     private ?string $stateDescription = null;
 
     #[ORM\Column(length: 64, nullable: true, options: ['comment' => '微信支付服务订单号'])]
+    #[Assert\Length(max: 64)]
     private ?string $orderId = null;
 
     #[ORM\Column(length: 300, nullable: true, options: ['comment' => '跳转微信侧小程序订单数据'])]
+    #[Assert\Length(max: 300)]
     private ?string $package = null;
 
     #[ORM\Column(nullable: true, options: ['comment' => '商户收款总金额'])]
+    #[Assert\PositiveOrZero]
     private ?int $totalAmount = null;
 
     #[ORM\Column(nullable: true, options: ['comment' => '是否需要收款'])]
+    #[Assert\Type(type: 'bool')]
     private ?bool $needCollection = null;
 
+    /**
+     * @var array<string, mixed>|null
+     */
     #[ORM\Column(nullable: true, options: ['comment' => '收款信息'])]
+    #[Assert\Type(type: 'array')]
     private ?array $collection = null;
 
     #[ORM\Column(length: 30, nullable: true, options: ['comment' => '取消原因'])]
+    #[Assert\Length(max: 30)]
     private ?string $cancelReason = null;
 
     #[ORM\Column(length: 50, nullable: true, options: ['comment' => '修改金额原因'])]
+    #[Assert\Length(max: 50)]
     private ?string $modifyPriceReason = null;
-
-    use SnowflakeKeyAware;
-    use TimestampableAware;
 
     public function __construct()
     {
@@ -123,17 +166,39 @@ class ScoreOrder implements \Stringable
         $this->postDiscounts = new ArrayCollection();
     }
 
+    /**
+     * 批量设置基础属性
+     */
+    public function setBasicAttributes(
+        string $outTradeNo,
+        string $appId,
+        string $serviceId,
+        string $serviceIntroduction,
+        string $startTime,
+        string $riskFundName,
+        int $riskFundAmount,
+        string $notifyUrl,
+        Merchant $merchant,
+    ): void {
+        $this->outTradeNo = $outTradeNo;
+        $this->appId = $appId;
+        $this->serviceId = $serviceId;
+        $this->serviceIntroduction = $serviceIntroduction;
+        $this->startTime = $startTime;
+        $this->riskFundName = $riskFundName;
+        $this->riskFundAmount = $riskFundAmount;
+        $this->notifyUrl = $notifyUrl;
+        $this->merchant = $merchant;
+    }
 
     public function getOutTradeNo(): ?string
     {
         return $this->outTradeNo;
     }
 
-    public function setOutTradeNo(string $outTradeNo): static
+    public function setOutTradeNo(string $outTradeNo): void
     {
         $this->outTradeNo = $outTradeNo;
-
-        return $this;
     }
 
     public function getAppId(): ?string
@@ -141,11 +206,9 @@ class ScoreOrder implements \Stringable
         return $this->appId;
     }
 
-    public function setAppId(string $appId): static
+    public function setAppId(string $appId): void
     {
         $this->appId = $appId;
-
-        return $this;
     }
 
     public function getServiceId(): ?string
@@ -153,11 +216,9 @@ class ScoreOrder implements \Stringable
         return $this->serviceId;
     }
 
-    public function setServiceId(string $serviceId): static
+    public function setServiceId(string $serviceId): void
     {
         $this->serviceId = $serviceId;
-
-        return $this;
     }
 
     public function getServiceIntroduction(): ?string
@@ -165,11 +226,9 @@ class ScoreOrder implements \Stringable
         return $this->serviceIntroduction;
     }
 
-    public function setServiceIntroduction(string $serviceIntroduction): static
+    public function setServiceIntroduction(string $serviceIntroduction): void
     {
         $this->serviceIntroduction = $serviceIntroduction;
-
-        return $this;
     }
 
     /**
@@ -180,17 +239,15 @@ class ScoreOrder implements \Stringable
         return $this->postPayments;
     }
 
-    public function addScorePostPayment(PostPayment $postPayment): static
+    public function addScorePostPayment(PostPayment $postPayment): void
     {
         if (!$this->postPayments->contains($postPayment)) {
             $this->postPayments->add($postPayment);
             $postPayment->setScoreOrder($this);
         }
-
-        return $this;
     }
 
-    public function removePostPayment(PostPayment $postPayment): static
+    public function removePostPayment(PostPayment $postPayment): void
     {
         if ($this->postPayments->removeElement($postPayment)) {
             // set the owning side to null (unless already changed)
@@ -198,8 +255,6 @@ class ScoreOrder implements \Stringable
                 $postPayment->setScoreOrder(null);
             }
         }
-
-        return $this;
     }
 
     /**
@@ -210,17 +265,15 @@ class ScoreOrder implements \Stringable
         return $this->postDiscounts;
     }
 
-    public function addPostDiscount(PostDiscount $postDiscount): static
+    public function addPostDiscount(PostDiscount $postDiscount): void
     {
         if (!$this->postDiscounts->contains($postDiscount)) {
             $this->postDiscounts->add($postDiscount);
             $postDiscount->setScoreOrder($this);
         }
-
-        return $this;
     }
 
-    public function removePostDiscount(PostDiscount $postDiscount): static
+    public function removePostDiscount(PostDiscount $postDiscount): void
     {
         if ($this->postDiscounts->removeElement($postDiscount)) {
             // set the owning side to null (unless already changed)
@@ -228,8 +281,6 @@ class ScoreOrder implements \Stringable
                 $postDiscount->setScoreOrder(null);
             }
         }
-
-        return $this;
     }
 
     public function getStartTime(): ?string
@@ -237,11 +288,9 @@ class ScoreOrder implements \Stringable
         return $this->startTime;
     }
 
-    public function setStartTime(string $startTime): static
+    public function setStartTime(string $startTime): void
     {
         $this->startTime = $startTime;
-
-        return $this;
     }
 
     public function getStartTimeRemark(): ?string
@@ -249,11 +298,9 @@ class ScoreOrder implements \Stringable
         return $this->startTimeRemark;
     }
 
-    public function setStartTimeRemark(?string $startTimeRemark): static
+    public function setStartTimeRemark(?string $startTimeRemark): void
     {
         $this->startTimeRemark = $startTimeRemark;
-
-        return $this;
     }
 
     public function getEndTime(): ?string
@@ -261,11 +308,9 @@ class ScoreOrder implements \Stringable
         return $this->endTime;
     }
 
-    public function setEndTime(?string $endTime): static
+    public function setEndTime(?string $endTime): void
     {
         $this->endTime = $endTime;
-
-        return $this;
     }
 
     public function getEndTimeRemark(): ?string
@@ -273,11 +318,9 @@ class ScoreOrder implements \Stringable
         return $this->endTimeRemark;
     }
 
-    public function setEndTimeRemark(?string $endTimeRemark): static
+    public function setEndTimeRemark(?string $endTimeRemark): void
     {
         $this->endTimeRemark = $endTimeRemark;
-
-        return $this;
     }
 
     public function getStartLocation(): ?string
@@ -285,11 +328,9 @@ class ScoreOrder implements \Stringable
         return $this->startLocation;
     }
 
-    public function setStartLocation(?string $startLocation): static
+    public function setStartLocation(?string $startLocation): void
     {
         $this->startLocation = $startLocation;
-
-        return $this;
     }
 
     public function getEndLocation(): ?string
@@ -297,11 +338,9 @@ class ScoreOrder implements \Stringable
         return $this->endLocation;
     }
 
-    public function setEndLocation(?string $endLocation): static
+    public function setEndLocation(?string $endLocation): void
     {
         $this->endLocation = $endLocation;
-
-        return $this;
     }
 
     public function getRiskFundName(): ?string
@@ -309,11 +348,9 @@ class ScoreOrder implements \Stringable
         return $this->riskFundName;
     }
 
-    public function setRiskFundName(string $riskFundName): static
+    public function setRiskFundName(string $riskFundName): void
     {
         $this->riskFundName = $riskFundName;
-
-        return $this;
     }
 
     public function getRiskFundAmount(): ?int
@@ -321,11 +358,9 @@ class ScoreOrder implements \Stringable
         return $this->riskFundAmount;
     }
 
-    public function setRiskFundAmount(int $riskFundAmount): static
+    public function setRiskFundAmount(int $riskFundAmount): void
     {
         $this->riskFundAmount = $riskFundAmount;
-
-        return $this;
     }
 
     public function getRiskFundDescription(): ?string
@@ -333,11 +368,9 @@ class ScoreOrder implements \Stringable
         return $this->riskFundDescription;
     }
 
-    public function setRiskFundDescription(?string $riskFundDescription): static
+    public function setRiskFundDescription(?string $riskFundDescription): void
     {
         $this->riskFundDescription = $riskFundDescription;
-
-        return $this;
     }
 
     public function getAttach(): ?string
@@ -345,11 +378,9 @@ class ScoreOrder implements \Stringable
         return $this->attach;
     }
 
-    public function setAttach(?string $attach): static
+    public function setAttach(?string $attach): void
     {
         $this->attach = $attach;
-
-        return $this;
     }
 
     public function getNotifyUrl(): ?string
@@ -357,11 +388,9 @@ class ScoreOrder implements \Stringable
         return $this->notifyUrl;
     }
 
-    public function setNotifyUrl(string $notifyUrl): static
+    public function setNotifyUrl(string $notifyUrl): void
     {
         $this->notifyUrl = $notifyUrl;
-
-        return $this;
     }
 
     public function getOpenId(): ?string
@@ -369,11 +398,9 @@ class ScoreOrder implements \Stringable
         return $this->openId;
     }
 
-    public function setOpenId(?string $openId): static
+    public function setOpenId(?string $openId): void
     {
         $this->openId = $openId;
-
-        return $this;
     }
 
     public function isNeedUserConfirm(): ?bool
@@ -381,11 +408,9 @@ class ScoreOrder implements \Stringable
         return $this->needUserConfirm;
     }
 
-    public function setNeedUserConfirm(?bool $needUserConfirm): static
+    public function setNeedUserConfirm(?bool $needUserConfirm): void
     {
         $this->needUserConfirm = $needUserConfirm;
-
-        return $this;
     }
 
     public function getState(): ?ScoreOrderState
@@ -393,11 +418,9 @@ class ScoreOrder implements \Stringable
         return $this->state;
     }
 
-    public function setState(?ScoreOrderState $state): static
+    public function setState(?ScoreOrderState $state): void
     {
         $this->state = $state;
-
-        return $this;
     }
 
     public function getStateDescription(): ?string
@@ -405,11 +428,9 @@ class ScoreOrder implements \Stringable
         return $this->stateDescription;
     }
 
-    public function setStateDescription(?string $stateDescription): static
+    public function setStateDescription(?string $stateDescription): void
     {
         $this->stateDescription = $stateDescription;
-
-        return $this;
     }
 
     public function getOrderId(): ?string
@@ -417,11 +438,9 @@ class ScoreOrder implements \Stringable
         return $this->orderId;
     }
 
-    public function setOrderId(?string $orderId): static
+    public function setOrderId(?string $orderId): void
     {
         $this->orderId = $orderId;
-
-        return $this;
     }
 
     public function getPackage(): ?string
@@ -429,11 +448,9 @@ class ScoreOrder implements \Stringable
         return $this->package;
     }
 
-    public function setPackage(?string $package): static
+    public function setPackage(?string $package): void
     {
         $this->package = $package;
-
-        return $this;
     }
 
     public function getMerchant(): ?Merchant
@@ -441,11 +458,9 @@ class ScoreOrder implements \Stringable
         return $this->merchant;
     }
 
-    public function setMerchant(?Merchant $merchant): static
+    public function setMerchant(?Merchant $merchant): void
     {
         $this->merchant = $merchant;
-
-        return $this;
     }
 
     public function getTotalAmount(): ?int
@@ -453,11 +468,9 @@ class ScoreOrder implements \Stringable
         return $this->totalAmount;
     }
 
-    public function setTotalAmount(?int $totalAmount): static
+    public function setTotalAmount(?int $totalAmount): void
     {
         $this->totalAmount = $totalAmount;
-
-        return $this;
     }
 
     public function isNeedCollection(): ?bool
@@ -465,23 +478,25 @@ class ScoreOrder implements \Stringable
         return $this->needCollection;
     }
 
-    public function setNeedCollection(?bool $needCollection): static
+    public function setNeedCollection(?bool $needCollection): void
     {
         $this->needCollection = $needCollection;
-
-        return $this;
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     public function getCollection(): ?array
     {
         return $this->collection;
     }
 
-    public function setCollection(?array $collection): static
+    /**
+     * @param array<string, mixed>|null $collection
+     */
+    public function setCollection(?array $collection): void
     {
         $this->collection = $collection;
-
-        return $this;
     }
 
     public function getCancelReason(): ?string
@@ -489,11 +504,9 @@ class ScoreOrder implements \Stringable
         return $this->cancelReason;
     }
 
-    public function setCancelReason(?string $cancelReason): static
+    public function setCancelReason(?string $cancelReason): void
     {
         $this->cancelReason = $cancelReason;
-
-        return $this;
     }
 
     public function getModifyPriceReason(): ?string
@@ -501,11 +514,9 @@ class ScoreOrder implements \Stringable
         return $this->modifyPriceReason;
     }
 
-    public function setModifyPriceReason(?string $modifyPriceReason): static
+    public function setModifyPriceReason(?string $modifyPriceReason): void
     {
         $this->modifyPriceReason = $modifyPriceReason;
-
-        return $this;
     }
 
     public function __toString(): string

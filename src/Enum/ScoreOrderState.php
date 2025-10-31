@@ -1,18 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace WechatPayScoreBundle\Enum;
 
+use Tourze\EnumExtra\BadgeInterface;
 use Tourze\EnumExtra\Itemable;
 use Tourze\EnumExtra\ItemTrait;
 use Tourze\EnumExtra\Labelable;
 use Tourze\EnumExtra\Selectable;
 use Tourze\EnumExtra\SelectTrait;
 
-enum ScoreOrderState: string implements Labelable, Itemable, Selectable
+enum ScoreOrderState: string implements Labelable, Itemable, Selectable, BadgeInterface
 {
     use ItemTrait;
     use SelectTrait;
-
     case CREATED = 'CREATED';
     case DOING = 'DOING';
     case DONE = 'DONE';
@@ -28,5 +30,21 @@ enum ScoreOrderState: string implements Labelable, Itemable, Selectable
             self::REVOKED => '取消服务',
             self::EXPIRED => '已失效',
         };
+    }
+
+    public function getBadgeType(): string
+    {
+        return match ($this) {
+            self::CREATED => 'info',
+            self::DOING => 'warning',
+            self::DONE => 'success',
+            self::REVOKED => 'danger',
+            self::EXPIRED => 'secondary',
+        };
+    }
+
+    public function getBadge(): string
+    {
+        return $this->getLabel();
     }
 }

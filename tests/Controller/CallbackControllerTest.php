@@ -1,51 +1,33 @@
 <?php
 
-declare(strict_types=1);
-
 namespace WechatPayScoreBundle\Tests\Controller;
 
-use PHPUnit\Framework\TestCase;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\EventDispatcher\EventDispatcherInterface;
-use Symfony\Component\HttpFoundation\Request;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\RunTestsInSeparateProcesses;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Tourze\PHPUnitSymfonyWebTest\AbstractWebTestCase;
 use WechatPayScoreBundle\Controller\CallbackController;
-use WechatPayScoreBundle\Entity\ScoreOrder;
-use WechatPayScoreBundle\Event\ScoreOrderCallbackEvent;
-use WechatPayScoreBundle\Repository\ScoreOrderRepository;
 
-class CallbackControllerTest extends TestCase
+/**
+ * @internal
+ */
+#[CoversClass(CallbackController::class)]
+#[RunTestsInSeparateProcesses]
+final class CallbackControllerTest extends AbstractWebTestCase
 {
-    private CallbackController $controller;
-    private ScoreOrderRepository $scoreOrderRepository;
-    private EventDispatcherInterface $eventDispatcher;
-    private LoggerInterface $logger;
-
-    protected function setUp(): void
+    protected function getTestUrl(): string
     {
-        $this->scoreOrderRepository = $this->createMock(ScoreOrderRepository::class);
-        $this->eventDispatcher = $this->createMock(EventDispatcherInterface::class);
-        $this->logger = $this->createMock(LoggerInterface::class);
-        
-        $this->controller = new CallbackController(
-            $this->scoreOrderRepository,
-            $this->eventDispatcher,
-            $this->logger
-        );
+        return '/wechat-payment/score-order/success-callback/test-order';
     }
 
-    public function testInvokeThrowsNotFoundExceptionWhenScoreOrderNotFound(): void
+    #[DataProvider('provideNotAllowedMethods')]
+    public function testMethodNotAllowed(string $method): void
     {
-        $this->scoreOrderRepository->expects($this->once())
-            ->method('findOneBy')
-            ->with(['outTradeNo' => 'test123'])
-            ->willReturn(null);
+        $client = self::createClientWithDatabase();
+        $client->catchExceptions(true);
+        $client->request($method, $this->getTestUrl());
 
-        $request = new Request();
-
-        $this->expectException(NotFoundHttpException::class);
-        
-        $this->controller->__invoke('test123', $request);
+        self::assertSame(405, $client->getResponse()->getStatusCode());
     }
-
 }

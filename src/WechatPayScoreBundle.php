@@ -9,6 +9,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 use Tourze\BundleDependency\BundleDependencyInterface;
 use Tourze\RoutingAutoLoaderBundle\RoutingAutoLoaderBundle;
 use WechatPayBundle\WechatPayBundle;
+use Tourze\EasyAdminMenuBundle\EasyAdminMenuBundle;
 
 class WechatPayScoreBundle extends Bundle implements BundleDependencyInterface
 {
@@ -18,6 +19,7 @@ class WechatPayScoreBundle extends Bundle implements BundleDependencyInterface
             WechatPayBundle::class => ['all' => true],
             DoctrineBundle::class => ['all' => true],
             RoutingAutoLoaderBundle::class => ['all' => true],
+            EasyAdminMenuBundle::class => ['all' => true],
         ];
     }
 }

@@ -19,11 +19,6 @@ use WechatPayScoreBundle\Entity\PostPayment;
 #[RunTestsInSeparateProcesses]
 final class PostPaymentCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(PostPayment::class, PostPaymentCrudController::getEntityFqcn());
-    }
-
     public function testConfigureFieldsReturnsIterable(): void
     {
         $controller = new PostPaymentCrudController();

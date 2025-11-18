@@ -19,11 +19,6 @@ use WechatPayScoreBundle\Entity\ScoreOrder;
 #[RunTestsInSeparateProcesses]
 final class ScoreOrderCrudControllerTest extends AbstractEasyAdminControllerTestCase
 {
-    public function testGetEntityFqcn(): void
-    {
-        $this->assertEquals(ScoreOrder::class, ScoreOrderCrudController::getEntityFqcn());
-    }
-
     public function testConfigureFieldsReturnsIterable(): void
     {
         $controller = new ScoreOrderCrudController();

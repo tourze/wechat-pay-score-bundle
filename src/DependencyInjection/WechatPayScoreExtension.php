@@ -7,7 +7,7 @@ namespace WechatPayScoreBundle\DependencyInjection;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Tourze\SymfonyDependencyServiceLoader\AutoExtension;
 
-class WechatPayScoreExtension extends AutoExtension
+final class WechatPayScoreExtension extends AutoExtension
 {
     protected function getConfigDir(): string
     {

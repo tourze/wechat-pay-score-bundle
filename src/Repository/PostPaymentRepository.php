@@ -13,7 +13,7 @@ use WechatPayScoreBundle\Entity\PostPayment;
  * @extends ServiceEntityRepository<PostPayment>
  */
 #[AsRepository(entityClass: PostPayment::class)]
-class PostPaymentRepository extends ServiceEntityRepository
+final class PostPaymentRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

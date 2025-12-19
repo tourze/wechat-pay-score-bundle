@@ -10,7 +10,7 @@ use WechatPayScoreBundle\Entity\ScoreOrder;
 /**
  * @see https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter6_1_22.shtml
  */
-class ScoreOrderCallbackEvent extends Event
+final class ScoreOrderCallbackEvent extends Event
 {
     private string $eventType;
 

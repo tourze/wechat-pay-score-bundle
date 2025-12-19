@@ -26,7 +26,7 @@ use Yiisoft\Json\Json;
 #[AsEntityListener(event: Events::postLoad, method: 'postLoad', entity: ScoreOrder::class)]
 #[AsEntityListener(event: Events::preRemove, method: 'preRemove', entity: ScoreOrder::class)]
 #[AsEntityListener(event: Events::preUpdate, method: 'preUpdate', entity: ScoreOrder::class)]
-class ScoreOrderListener
+final class ScoreOrderListener
 {
     public function __construct(
         private readonly WechatPayBuilder $payBuilder,

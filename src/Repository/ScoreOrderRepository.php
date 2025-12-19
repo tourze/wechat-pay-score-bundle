@@ -13,7 +13,7 @@ use WechatPayScoreBundle\Entity\ScoreOrder;
  * @extends ServiceEntityRepository<ScoreOrder>
  */
 #[AsRepository(entityClass: ScoreOrder::class)]
-class ScoreOrderRepository extends ServiceEntityRepository
+final class ScoreOrderRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
